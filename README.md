@@ -1,6 +1,6 @@
 # PMC-Image v0 Prototype
 
-Implements the `.pmcimg` container format per `spec/pmcimg-v0.md`:
+Implements the `.pmcimg` container format per [`spec/pmcimg-v0.md`](./spec/pmcimg-v0.md)(**We strongly suggest reading the spec first**):
 - AES-256-GCM encryption of the original PNG
 - Manifest with crypto params and provenance, signed with Ed25519
 - Canonicalized JSON for signing; container with header + manifest + ciphertext
@@ -11,8 +11,6 @@ pmcimg-prototype/
   spec/pmcimg-v0.md
   rust/pmcimg-core/        # Rust library (optionally compiled to WASM)
   cli/pmcimg-cli/          # Rust CLI: encode/decode
-  js/pmcimg-wasm-wrapper/  # Thin TS wrapper for WASM bindings (scaffold)
-  js/example-web-demo/     # Minimal demo scaffold
 ```
 
 ## Build (Rust)
@@ -44,10 +42,12 @@ Seed can be hex (64 chars) or base64url (no padding).
 
 ## WASM (scaffold)
 Build the core with `--features wasm` via wasm-pack:
-```
+```sh
 cargo install wasm-pack
+
 cd rust/pmcimg-core
-wasm-pack build --target web --features wasm --out-name pmcimg_core --out-dir ../../js/pkg
+
+wasm-pack build --target web --features wasm
 ```
 Then wire `js/pmcimg-wasm-wrapper` to use the generated package and `js/example-web-demo/demo.js` to import it.
 
