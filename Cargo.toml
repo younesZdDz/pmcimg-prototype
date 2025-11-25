@@ -1,0 +1,10 @@
+[workspace]
+members = [
+    "rust/pmcimg-core",
+    "cli/pmcimg-cli",
+]
+resolver = "2"
+
+
+
+

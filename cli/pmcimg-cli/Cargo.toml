@@ -1,0 +1,18 @@
+[package]
+name = "pmcimg-cli"
+version = "0.1.0"
+edition = "2025"
+description = "CLI for PMC-Image v0: encode/decode/verify"
+license = "Apache-2.0"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+pmcimg-core = { path = "../../rust/pmcimg-core" }
+serde_json = "1"
+hex = "0.4"
+base64 = "0.22"
+time = { version = "0.3", features = ["formatting"] }
+
+
+
+

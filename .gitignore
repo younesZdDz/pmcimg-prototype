@@ -1,0 +1,45 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Rust build output
+/target/
+**/target/
+
+# Node.js
+**/node_modules/
+
+# JS/TS build artifacts
+**/dist/
+**/build/
+**/.cache/
+**/.parcel-cache/
+**/.vite/
+**/.turbo/
+**/.next/
+**/.nuxt/
+**/coverage/
+.eslintcache
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# wasm-pack output
+**/pkg/
+wasm-pack.log
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.*
+
+
