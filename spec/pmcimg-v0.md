@@ -7,7 +7,7 @@
 - Manifest contains:
     - Info about the image (width, height, mime)
     - The hash of the encrypted pixel block
-    - The symmetric key + nonce (or key wrapped in future versions)
+    - The symmetric key + nonce
     - The signature over the manifest + ciphertext hash
 
 **Key property:**
@@ -272,3 +272,36 @@ If ok → we now have a normal `PNG` byte buffer.
 ### Step 5 – render
 
 Feed `png_bytes` to any standard `PNG` decoder (browser, image lib, etc.) and display.
+
+
+## 5. Key Identity and Trust (Out of Scope for v0)
+
+PMCIMG v0 defines **how** to sign and verify:
+- A public key in the manifest proves: “this image was signed by the holder of this key”.
+- It does **not** define: “this key belongs to Nikon / Apple / Midjourney”.
+
+The binding between a public key and a real-world entity is provided by an external **trust store**, e.g.:
+
+- A browser/OS-maintained registry of trusted PMCIMG keys.
+- A vendor-published key list (e.g. Nikon publishes its camera signing keys).
+- A C2PA-style PKI / certificate chain.
+
+Verifiers are expected to:
+1. Extract `signature.pubkey` and optional `signature.key_id`.
+2. Look them up in a trusted registry.
+3. Decide whether to treat the image as:
+   - **Trusted** (key present and not revoked),
+   - **Unverified** (key unknown),
+   - **Revoked** (key explicitly marked invalid).
+
+### 5.1 Key Revocation (v0 guidance)
+
+Key revocation is handled **outside** the PMCIMG container:
+
+- Trust stores should support marking keys as **revoked** or **expired**.
+- On verification:
+  - If key is revoked → treat as “authenticity broken” or show a strong warning.
+  - If key is expired → optional policy: warn or treat as untrusted.
+- Historical policy is up to implementers (e.g. “signatures before revocation date are shown as ‘historically valid but no longer trusted’”).
+
+PMCIMG v0 only standardizes the container and signature scheme. The **governance of which keys to trust or revoke** is intentionally left to higher-level ecosystems (browsers, OS vendors, manufacturers, platforms).

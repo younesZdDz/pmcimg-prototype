@@ -206,6 +206,34 @@ Optionally:
 </pre>
 This mirrors how HTTPS replaced HTTP — gradually but systematically.
 
+### Phase 6 – Trusted Key Registries (Identity Binding)
+
+A signature alone only proves **integrity**, not **identity**.  
+To know that a key truly belongs to “Nikon”, “Apple”, or “Midjourney”, platforms rely on a **trusted key registry**:
+
+- Camera manufacturers publish their official signing keys.
+- AI platforms publish their model/device keys.
+- Browsers and operating systems maintain a local **PMCIMG trust store** mapping:
+pubkey → entity (e.g. Nikon D850, iPhone 17 Pro, Midjourney v7)
+
+vbnet
+Copy code
+- Verification uses this registry to decide whether to display:
+- **Trusted** (key known and valid)
+- **Unverified** (unknown key)
+- **Revoked** (key explicitly invalidated)
+
+This mirrors how HTTPS uses certificate roots and how WebAuthn/device attestation work today.
+
+#### Key Revocation
+Manufacturers and platforms can mark a key as **revoked** in the trust store.  
+During verification:
+- Revoked key → treat as “authenticity broken” or show a strong warning  
+- Unknown key → show “unverified signer” label  
+- Valid key → normal authentic rendering
+
+Future PMCIMG versions may define optional standardized trust store formats, but v0 intentionally leaves this to browsers/OS vendors.
+
 #### E. Why Adoption Is Realistic
 
 - Cameras already sign firmware and secure enclave operations
@@ -296,10 +324,6 @@ cd rust/pmcimg-core
 
 wasm-pack build --target web --features wasm
 ```
-
-## Security notes
-- v0 stores the symmetric key in cleartext in the manifest by design (to enforce “manifest required”).
-- Future versions should wrap the key to a device or platform public key and/or enforce stronger provenance policies.
 
 
 
