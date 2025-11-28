@@ -173,6 +173,43 @@ AES-GCM authentication fails.
 
 This prevents “silent stripping” — the core problem with C2PA today.
 
+Here is diagram explaining the lifecycle of `pmcimg` file, we will go into detail after this to see how an adoption plan would look like:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant P as Producer<br/>(Camera / AI)
+    participant L as PMCIMG Library
+    participant F as .pmcimg File
+    participant V as Verifier<br/>(OS / Browser / App)
+    participant T as Trust Store<br/>(Key Registry)
+
+    %% --- ENCODE PHASE ---
+    P->>L: pixels + metadata + private signing key
+    L->>L: Encrypt pixels (AES-256-GCM)
+    L->>L: Build manifest (media + crypto + provenance)
+    L->>L: Sign manifest + ciphertext hash (Ed25519)
+    L->>F: Write header + manifest + ciphertext<br/>(.pmcimg created)
+
+    %% --- VERIFY PHASE ---
+    V->>F: Read .pmcimg file
+    F-->>V: header + manifest + ciphertext
+
+    %% Key Trust Check
+    V->>T: Lookup manifest.signature.pubkey<br/>and key_id
+    T-->>V: trust result<br/>(trusted / unknown / revoked)
+
+    alt key trusted
+        V->>L: Verify signature + ciphertext hash
+        L-->>V: signature OK
+        V->>L: Decrypt pixels (AES-GCM)
+        L-->>V: PNG bytes
+        V->>V: Display image as authentic
+    else key unknown or revoked
+        V->>V: Reject or display warning<br/>("Unverified signer" / "Key revoked")
+    end
+```
+
 #### D. How Adoption Would Likely Roll Out
 
 **Phase 1 – Open-source SDKs (this project)**
@@ -206,7 +243,7 @@ Optionally:
 </pre>
 This mirrors how HTTPS replaced HTTP — gradually but systematically.
 
-### Phase 6 – Trusted Key Registries (Identity Binding)
+**Phase 6 – Trusted Key Registries (Identity Binding)**
 
 A signature alone only proves **integrity**, not **identity**.  
 To know that a key truly belongs to “Nikon”, “Apple”, or “Midjourney”, platforms rely on a **trusted key registry**:
@@ -225,7 +262,8 @@ Copy code
 
 This mirrors how HTTPS uses certificate roots and how WebAuthn/device attestation work today.
 
-#### Key Revocation
+**Key Revocation**:
+
 Manufacturers and platforms can mark a key as **revoked** in the trust store.  
 During verification:
 - Revoked key → treat as “authenticity broken” or show a strong warning  
