@@ -30,6 +30,38 @@ Let’s define a container layout:
 | **Ciphertext (PNG)**   | CiphertextLen | Encrypted `PNG` bytes           |
 
 
+```mermaid
+flowchart TB
+
+    subgraph PMCIMG_File["PMCIMG File (Binary Layout)"]
+        direction LR
+
+        H["Header (Fixed Size)
+--------------------------------
+4B  : Magic ('PMCI')
+1B  : Version
+4B  : ManifestLen (uint32 BE)
+8B  : CiphertextLen (uint64 BE)"]
+
+        M["Manifest (Variable Size)
+--------------------------------
+ManifestLen bytes
+Format: JSON or CBOR
+Contains:
+- media
+- crypto (nonce, key, sha256)
+- provenance
+- signature (pubkey, key_id, sig)"]
+
+        C["Encrypted PNG (Variable Size)
+-----------------------------------
+CiphertextLen bytes
+AES-256-GCM:
+ciphertext || auth_tag"]
+    end
+
+    H --> M --> C
+```
 
 **Concretely:**
 - Magic: `ASCII` `"PMCI"` (Protected Media Container - Image)
