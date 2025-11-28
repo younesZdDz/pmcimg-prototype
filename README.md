@@ -271,7 +271,8 @@ Encode:
 cargo run --package pmcimg-cli -- encode \
   --input input.png \
   --output output.pmcimg \
-  --seed 005c1468330d89f4715275333660e59c918a0e82bb6f4e3e4671a85608995c28 \
+  --signing-key private_ed25519.pem \
+  --key-id "midjourney-prod-v1" \
   --producer "demo-producer" \
   --device-id "device-1234" \
   --created-at "2025-11-22T18:00:00Z"
@@ -284,7 +285,7 @@ cargo run --package pmcimg-cli -- decode \
   --output restored.png
 ```
 
-Seed can be hex (64 chars) or base64url (no padding).
+Signing key must be an Ed25519 private key in PKCS#8 PEM format. `--key-id` is embedded in `manifest.signature.key_id`.
 
 ## WASM (scaffold)
 Build the core with `--features wasm` via wasm-pack:

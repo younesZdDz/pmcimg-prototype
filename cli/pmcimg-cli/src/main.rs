@@ -1,10 +1,10 @@
 use std::fs;
 use std::path::PathBuf;
 
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use base64::Engine;
 use clap::{Parser, Subcommand};
-use pmcimg_core::{decode_and_verify_pmcimg, encode_png_to_pmcimg, EncodeOptions};
+use pmcimg_core::{decode_and_verify_pmcimg, encode_png_to_pmcimg_with_signing_key, EncodeOptions};
+use ed25519_dalek::pkcs8::DecodePrivateKey;
+use ed25519_dalek::SigningKey;
 
 #[derive(Parser)]
 #[command(name = "pmcimg-cli", about = "PMC-Image v0 CLI")]
@@ -23,9 +23,12 @@ enum Commands {
         /// output .pmcimg path
         #[arg(short, long)]
         output: PathBuf,
-        /// Ed25519 private seed (32 bytes) as HEX or base64url (no padding)
+        /// Path to Ed25519 private key in PKCS#8 PEM format
         #[arg(long)]
-        seed: String,
+        signing_key: PathBuf,
+        /// Key identifier to embed in manifest.signature.key_id
+        #[arg(long, value_name = "KEY_ID")]
+        key_id: String,
         /// Producer string
         #[arg(long)]
         producer: String,
@@ -47,20 +50,6 @@ enum Commands {
     },
 }
 
-fn parse_seed_32(s: &str) -> Result<[u8; 32], String> {
-    let bytes = if s.len() == 64 && s.chars().all(|c| c.is_ascii_hexdigit()) {
-        hex::decode(s).map_err(|e| format!("hex decode: {e}"))?
-    } else {
-        URL_SAFE_NO_PAD.decode(s.as_bytes()).map_err(|e| format!("base64url decode: {e}"))?
-    };
-    if bytes.len() != 32 {
-        return Err(format!("seed must be 32 bytes, got {}", bytes.len()));
-    }
-    let mut out = [0u8; 32];
-    out.copy_from_slice(&bytes);
-    Ok(out)
-}
-
 fn now_iso8601() -> String {
     match time::OffsetDateTime::now_utc().format(&time::format_description::well_known::Rfc3339) {
         Ok(s) => s,
@@ -74,17 +63,22 @@ fn main() -> Result<(), String> {
         Commands::Encode {
             input,
             output,
-            seed,
+            signing_key,
+            key_id,
             producer,
             device_id,
             created_at,
         } => {
             let png_bytes = fs::read(&input).map_err(|e| format!("read input: {e}"))?;
-            let seed32 = parse_seed_32(&seed)?;
+            // Load Ed25519 signing key from PKCS#8 PEM -> DER
+            let pem_bytes = fs::read(&signing_key).map_err(|e| format!("read signing key: {e}"))?;
+            let (_label, der) = pem_rfc7468::decode_vec(&pem_bytes).map_err(|e| format!("PEM decode: {e}"))?;
+            let sk = SigningKey::from_pkcs8_der(&der).map_err(|e| format!("parse signing key (PKCS#8 DER): {e}"))?;
             let created_at = created_at.unwrap_or_else(now_iso8601);
-            let res = encode_png_to_pmcimg(
+            let res = encode_png_to_pmcimg_with_signing_key(
                 &png_bytes,
-                &seed32,
+                &sk,
+                Some(key_id),
                 EncodeOptions {
                     producer,
                     device_id,

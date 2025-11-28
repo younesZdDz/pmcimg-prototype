@@ -74,6 +74,7 @@ For `v0`, something like:
     "alg": "Ed25519",
     "pubkey": "BASE64URL_PUBKEY",
     "sig": "BASE64URL_SIGNATURE",
+    "key_id": "midjourney-prod-v1",
     "signed_payload": "sha256(manifest_without_signature + ciphertext_sha256)"
   }
 }
@@ -149,7 +150,8 @@ Construct manifest object:
   "signature": {
     "alg": "Ed25519",
     "pubkey": "BASE64URL(pubkey)",        // public key of the signer
-    "sig": null                           // filled in next step
+    "sig": null,                          // filled in next step
+    "key_id": "midjourney-prod-v1"        // optional key identifier
   }
 }
 ```

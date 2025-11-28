@@ -33,6 +33,8 @@ pub struct Signature {
     pub alg: String,      // "Ed25519"
     pub pubkey: String,   // base64url
     pub sig: Option<String>, // base64url signature; None during canonicalization
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub key_id: Option<String>, // optional key identifier for signer (e.g., "midjourney-prod-v1")
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -82,6 +84,9 @@ impl Manifest {
         sig.insert("alg".into(), Value::String(self.signature.alg.clone()));
         sig.insert("pubkey".into(), Value::String(self.signature.pubkey.clone()));
         sig.insert("sig".into(), Value::Null);
+        if let Some(key_id) = &self.signature.key_id {
+            sig.insert("key_id".into(), Value::String(key_id.clone()));
+        }
         root.insert("signature".into(), Value::Object(sig.into_iter().collect()));
 
         let canonical_json = serde_json::to_vec(&Value::Object(root.into_iter().collect()))
@@ -160,6 +165,7 @@ pub fn build_manifest(
             alg: "Ed25519".into(),
             pubkey: pubkey_b64,
             sig: None,
+            key_id: None,
         },
     }
 }
