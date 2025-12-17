@@ -33,26 +33,61 @@ As a result:
 
 ## 3. How C2PA Partially Solves the Problem
 
-**C2PA** introduces a signed manifest embedded in image **metadata**.
-It helps with:
-- Declaring who produced the media
-- Providing a signed record of editing steps
-- Detecting tampering if the metadata is still present
+C2PA defines a standardized way to attach **cryptographically signed
+provenance manifests** to media.
 
-However, **C2PA** has two fundamental limitations:
+A C2PA manifest may be:
+- **Embedded** inside the image file (e.g. JPEG/PNG containers), or
+- **Stored externally** and linked via a reference or recovered through
+  a **soft binding** mechanism (e.g. watermark or fingerprint).
 
-❌ **Metadata can be stripped**
+C2PA supports:
+- **Hard binding**: cryptographic hashes over pixel data or regions,
+  enabling tamper detection if the manifest is available.
+- **Soft binding**: non-cryptographic identifiers that help recover
+  a manifest if metadata is stripped or the image is re-encoded.
 
-If a platform or attacker removes the **metadata**:
-- the image still displays normally
-- the provenance disappears silently
+This allows C2PA to:
+- Declare who produced or edited the media
+- Provide a signed record of capture, edits, or AI generation
+- Detect tampering *when the manifest is present and verifiable*
 
-❌ **Pixels are not protected**
+### Limitations
 
-**C2PA** signs the manifest, not the pixel bytes.
-Attackers can modify pixels and simply remove the manifest.
+#### ❌ Provenance is optional at render time and not inforced
 
-So **C2PA** improves provenance, but cannot enforce it.
+If embedded metadata is removed, or if external manifests cannot
+be recovered:
+
+- The image still renders normally
+- Provenance may disappear silently
+- No failure is observable at the pixel level
+
+C2PA relies on user agents or platforms to surface
+“credential missing” states, but cannot enforce them.
+
+#### ❌ External verification may depend on infrastructure availability
+
+When using external manifests or soft binding:
+
+- Verification may require access to a remote manifest repository
+- Offline or long-term verification can fail if the repository is unavailable
+- Trust depends on correct repository resolution and integrity
+
+This introduces operational and availability dependencies outside
+the image file itself.
+
+#### ❌ Pixel data is not structurally protected
+
+C2PA signs the **manifest**, not the image container itself.
+
+An attacker can:
+- Modify pixel data
+- Strip or invalidate the manifest
+- Redistribute a visually plausible image with no provenance attached
+
+While tampering can be detected *if* the manifest is present,
+C2PA does not prevent pixels from being rendered without provenance.
 
 ## 4. How PMCIMG Fully Solves the Problem
 
